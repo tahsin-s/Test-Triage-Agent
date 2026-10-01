@@ -58,8 +58,10 @@ def run_selected_tests(
         raise ValueError("No selected tags available to run")
 
     project_root = Path(project_dir)
-    if not project_root.exists():
+    if not project_root.exists() and not dry_run:
         raise FileNotFoundError(f"Playwright project directory not found: {project_root}")
+    if not project_root.exists():
+        project_root.mkdir(parents=True, exist_ok=True)
 
     results: list[dict[str, Any]] = []
     for index, tag in enumerate(selected_tags, start=1):

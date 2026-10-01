@@ -64,7 +64,7 @@ CLI example:
 
 ```bash
 cd /home/tahsins/git/Test-Triage-Agent
-printf '%s\n' '@CreatesData' '@SmokeTest' '@fail' '@UnknownTag' > /tmp/qe_tags.txt
+printf '%s\n' '@alpha' '@beta' '@gamma' '@unknown-tag' > /tmp/qe_tags.txt
 ./.venv/bin/python src/qe_agent/tag_describer.py --tags-file /tmp/qe_tags.txt --descriptions-file /tmp/qe_tag_descriptions.json
 ```
 
@@ -104,7 +104,7 @@ node scripts/orchestrate-tag-runner.js \
   --project-dir ./banking-platform-voltio.QA/playwright
 ```
 
-This executes the selected tags in sequence and exits with a compact JSON summary. The `--dry-run` flag is available for previewing the command flow without executing Playwright.
+This executes the selected tags in sequence and exits with a compact JSON summary. The `--dry-run` flag is available for previewing the command flow without executing Playwright. In practice, the project is tag-agnostic: it consumes the ordered tags discovered from the feature suite and does not depend on a bank-specific tag list.
 
 ## Local Setup
 
@@ -120,7 +120,7 @@ To run the Playwright project from its own directory:
 ```bash
 cd /home/tahsins/git/Test-Triage-Agent/banking-platform-voltio.QA/playwright
 npm install
-npx playwright test --grep @CreatesData
+npx playwright test --grep @example-tag
 ```
 
 ## Validation Pattern
@@ -134,6 +134,23 @@ Each slice is intentionally kept small enough to be validated from the command l
 5. run the top recommended tags
 
 The goal is not a full autonomous system; it is a controlled, human-verifiable QA triage workflow.
+
+## Future Copilot Integration (Deferred)
+
+The current implementation remains CLI-first by design. The future VS Code Copilot entry point is intentionally isolated behind a thin adapter in `src/qe_agent/copilot_adapter.py`, which converts a chat prompt into repo-local CLI arguments without changing the core QA triage flow.
+
+Example contract:
+
+```python
+from qe_agent.copilot_adapter import build_cli_args_from_prompt
+
+args = build_cli_args_from_prompt(
+    "Run the triage flow for artifacts/ai-report.json and banking-platform-voltio.QA/playwright/tests/bdd/features in dry run"
+)
+# -> {"report_path": "artifacts/ai-report.json", "feature_dir": "banking-platform-voltio.QA/playwright/tests/bdd/features", "dry_run": True, "max_tags": 10}
+```
+
+This keeps the IDE trigger bounded to a single short prompt, a single CLI invocation, and a compact output footprint. The adapter is not part of the active execution path; it is a future refactor point for the IDE integration slice.
 
 ## Notes
 

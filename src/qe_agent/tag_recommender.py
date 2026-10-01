@@ -15,7 +15,7 @@ from qe_agent.recommendation.plan_run import plan_run
 from qe_agent.recommendation.read_report import read_risk_factors, load_report
 from qe_agent.recommendation.score_tags import score_tags
 
-DEFAULT_TAGS = ["@fail", "@CreatesData", "@SmokeTest"]
+DEFAULT_TAGS: list[str] = []
 
 
 def _load_descriptions(descriptions_input: str | Path | dict[str, Any] | None) -> list[str]:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -32,26 +33,19 @@ def read_risk_factors(report_input: str | Path | dict[str, Any]) -> list[dict[st
 
     if not top_failures and failed == 0:
         return [{
-            "tag": "@SmokeTest",
+            "tag": "@baseline",
             "risk_score": 25,
-            "reason": "No current failures were reported; use a fast smoke pass.",
+            "reason": "No current failures were reported; keep the next validation focused and fast.",
             "failure_count": 0,
         }]
 
     risk_items: list[dict[str, Any]] = []
-    for failure in top_failures[:5]:
+    for index, failure in enumerate(top_failures[:5], start=1):
         failure_location = str(failure.get("location") or "unknown")
         failure_title = str(failure.get("title") or failure.get("error") or "Failure")
-
-        if "registration" in failure_location or "account" in failure_location:
-            tag = "@CreatesData"
-            reason = "Registration/account setup is failing and likely requires fresh data setup."
-        elif "auth" in failure_location or "login" in failure_location:
-            tag = "@SmokeTest"
-            reason = "Authentication is a critical user flow and should be validated early."
-        else:
-            tag = "@fail"
-            reason = "A failing path was reported and should be treated as high-priority regression coverage."
+        normalized = re.sub(r"[^a-z0-9]+", "-", (failure_title or failure_location).lower()).strip("-")
+        tag = f"@issue-{index}" if not normalized else f"@{normalized[:18]}"
+        reason = "A failing path was reported and should be treated as high-priority regression coverage."
 
         risk_score = 55 + failed + (5 if status == "FAIL" else 0)
         if total:
@@ -60,13 +54,13 @@ def read_risk_factors(report_input: str | Path | dict[str, Any]) -> list[dict[st
         risk_items.append({
             "tag": tag,
             "risk_score": risk_score,
-            "reason": f"{reason} Latest failure: {failure_title}",
+            "reason": f"{reason} Latest failure: {failure_title} ({failure_location})",
             "failure_count": failed,
         })
 
     if not risk_items:
         risk_items.append({
-            "tag": "@SmokeTest",
+            "tag": "@baseline",
             "risk_score": 35,
             "reason": "The report shows no detailed failure context, so keep validation shallow and fast.",
             "failure_count": failed,
