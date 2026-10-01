@@ -1,0 +1,62 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+.ENV/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Python tooling caches and local state
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.ipynb_checkpoints/
+
+# Node / Playwright local outputs
+node_modules/
+playwright-report/
+playwright/.cache/
+**/playwright-report/
+**/test-results/
+**/playwright/.cache/
+
+# Local project artifacts that are generated during runs
+artifacts/
+!artifacts/.gitkeep
+facts/
+!facts/.gitkeep
+reports/
+!reports/.gitkeep
+*.log
+*.tmp
+*.bak
+
+# Editor / OS noise
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Secrets / environment values
+.env
+.env.*
+*.pem
+*.key
+*.crt
+
+# Build output and caches
+build/
+dist/
+coverage/
+.pytype/
+
+# Common local runtime files
+*.sqlite3
+*.db

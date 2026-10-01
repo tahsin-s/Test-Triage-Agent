@@ -1,0 +1,6 @@
+{
+  "@CreatesData": "Creates the test data required for this scenario.",
+  "@SmokeTest": "Fast smoke check for critical user flows.",
+  "@UnknownTag": "Marks the unknown tag scenario or workflow.",
+  "@fail": "Known failing scenario retained to track the regression."
+}
