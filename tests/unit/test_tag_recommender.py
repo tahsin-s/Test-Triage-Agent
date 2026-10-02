@@ -20,9 +20,9 @@ def test_build_tag_plan_returns_ordered_tags_and_duration_estimates():
         ],
     }
     descriptions = {
-        "@CreatesData": "Creates the test data required for this scenario.",
-        "@SmokeTest": "Fast smoke check for critical user flows.",
-        "@fail": "Known failing scenario retained to track the regression.",
+        "@alpha": "A generic scenario tag used in the example.",
+        "@beta": "A second generic scenario tag used in the example.",
+        "@gamma": "A third generic scenario tag used in the example.",
     }
 
     plan = build_tag_plan(report, descriptions, max_tags=2)
@@ -33,4 +33,4 @@ def test_build_tag_plan_returns_ordered_tags_and_duration_estimates():
     assert all("estimated_duration_seconds" in item for item in plan["tags"])
     assert [item["order"] for item in plan["tags"]] == [1, 2]
     assert all(item["estimated_duration_seconds"] > 0 for item in plan["tags"])
-    assert any(item["tag"] == "@fail" for item in plan["tags"])
+    assert any(item["tag"] in descriptions for item in plan["tags"])

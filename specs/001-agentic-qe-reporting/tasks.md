@@ -98,12 +98,12 @@ Each slice must follow these explicit guardrails so implementation remains finit
 
 **Human CLI**: `node scripts/orchestrate-tag-runner.js --report-dir ./playwright-report --feature-dir ./banking-platform-voltio.QA/playwright/tests/bdd/features --tag-plan ./artifacts/tag-plan.json`
 
-- [ ] T024 Create the orchestrator entry in scripts/orchestrate-tag-runner.js
-- [ ] T025 [P] Detect whether tag descriptions are already available and skip the description agent when they are current in src/qe_agent/orchestration/should_refresh_tags.py
-- [ ] T026 [P] Trigger the tag description agent only when required, then invoke the recommendation agent in src/qe_agent/orchestration/run_orchestration.py
-- [ ] T027 [P] Execute the selected Playwright BDD tags in the recommended order using the existing `npx playwright test --grep` flow in src/qe_agent/orchestration/run_selected_tests.py
-- [ ] T028 Add a CLI-safe summary output that includes the selected tag list, overall duration estimate, and run status in src/qe_agent/orchestration/summarize_run.py
-- [ ] T029 Add a test in tests/integration/test_orchestrator.py that verifies the orchestration flow produces the expected tag sequence and execution command
+- [X] T024 Create the orchestrator entry in scripts/orchestrate-tag-runner.js
+- [X] T025 [P] Detect whether tag descriptions are already available and skip the description agent when they are current in src/qe_agent/orchestration/should_refresh_tags.py
+- [X] T026 [P] Trigger the tag description agent only when required, then invoke the recommendation agent in src/qe_agent/orchestration/run_orchestration.py
+- [X] T027 [P] Execute the selected Playwright BDD tags in the recommended order using the existing `npx playwright test --grep` flow in src/qe_agent/orchestration/run_selected_tests.py
+- [X] T028 Add a CLI-safe summary output that includes the selected tag list, overall duration estimate, and run status in src/qe_agent/orchestration/summarize_run.py
+- [X] T029 Add a test in tests/integration/test_orchestrator.py that verifies the orchestration flow produces the expected tag sequence and execution command
 
 **Validation**: Run the orchestrator on a sample artifact set and verify it executes exactly the recommended tags in order. If the run exceeds the defined execution cap, abort after the current batch, emit a summary, and exit cleanly.
 
@@ -113,10 +113,10 @@ Each slice must follow these explicit guardrails so implementation remains finit
 
 **Purpose**: Isolate the later VS Code Copilot Chat integration work so the current CLI-first implementation remains small and reviewable.
 
-- [ ] T030 Design the VS Code Copilot trigger contract and identify how the chat session will invoke the existing CLI workflow
-- [ ] T031 [P] Add a thin adapter layer that translates a Copilot chat prompt into the existing repo-local CLI arguments
-- [ ] T032 [P] Validate that the Copilot-triggered path remains bounded to a single chat turn and short output
-- [ ] T033 Document the future integration as a post-MVP refactor rather than part of the current slice implementation
+- [X] T030 Design the VS Code Copilot trigger contract and identify how the chat session will invoke the existing CLI workflow
+- [X] T031 [P] Add a thin adapter layer that translates a Copilot chat prompt into the existing repo-local CLI arguments
+- [X] T032 [P] Validate that the Copilot-triggered path remains bounded to a single chat turn and short output
+- [X] T033 Document the future integration as a post-MVP refactor rather than part of the current slice implementation
 
 ---
 
@@ -124,10 +124,10 @@ Each slice must follow these explicit guardrails so implementation remains finit
 
 **Purpose**: Ensure each slice is independently callable and understandable by a human reviewer.
 
-- [ ] T034 [P] Run the slice scripts in order against a known sample report and confirm each one produces output without a broad or hidden setup step
-- [ ] T035 [P] Verify each script documents the command needed to run it from the CLI
-- [ ] T036 [P] Add a short README section that explains the five-slice workflow and how a human can verify behavior at each stage
-- [ ] T037 Confirm all generated artifacts are stored under a clear folder such as artifacts/ and remain easy to inspect
+- [X] T034 [P] Run the slice scripts in order against a known sample report and confirm each one produces output without a broad or hidden setup step
+- [X] T035 [P] Verify each script documents the command needed to run it from the CLI
+- [X] T036 [P] Add a short README section that explains the five-slice workflow and how a human can verify behavior at each stage
+- [X] T037 Confirm all generated artifacts are stored under a clear folder such as artifacts/ and remain easy to inspect
 
 ---
 

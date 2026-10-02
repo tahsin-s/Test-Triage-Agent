@@ -1,17 +1,12 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Callable
 
-KNOWN_TAG_DESCRIPTIONS = {
-    "@CreatesData": "Creates the test data required for this scenario.",
-    "@SmokeTest": "Fast smoke check for critical user flows.",
-    "@fail": "Known failing scenario retained to track the regression.",
-}
-
 DEFAULT_DESCRIPTIONS_FILE = Path(__file__).with_name("tag_descriptions.json")
-FALLBACK_DESCRIPTION = "{tag} has no dedicated description yet; it marks a focused scenario or classification."
+FALLBACK_DESCRIPTION = "{tag} has no dedicated description yet; it marks an unknown tag scenario or workflow."
 
 
 def _fallback_description(tag: str) -> str:
@@ -54,18 +49,10 @@ def _generate_tag_description(tag: str) -> str | None:
     if not raw_tag:
         return None
 
-    words = []
-    current = []
-    for char in raw_tag:
-        if char.isupper() and current:
-            words.append("".join(current))
-            current = [char.lower()]
-        else:
-            current.append(char.lower())
-    if current:
-        words.append("".join(current))
-
-    readable = " ".join(words).strip()
+    readable = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", raw_tag)
+    readable = readable.replace("-", " ").replace("_", " ")
+    readable = " ".join(part for part in readable.split() if part)
+    readable = readable.lower().strip()
     if not readable:
         return None
 
@@ -77,7 +64,7 @@ def describe_tags(
     descriptions_file: str | Path | None = None,
     generator: Callable[[str], str | None] | None = None,
 ) -> dict[str, str]:
-    known_registry = {**KNOWN_TAG_DESCRIPTIONS, **_load_descriptions_file(descriptions_file)}
+    known_registry = _load_descriptions_file(descriptions_file)
     descriptions: dict[str, str] = {}
     generated_any = False
 
