@@ -9,7 +9,7 @@ on:
         type: string
         default: main
       tags:
-        description: Ordered Playwright tags to run, comma-separated (for example: @smoke,@auth,@goals)
+        description: "Ordered Playwright tags to run, comma-separated (for example: @smoke,@auth,@goals)"
         required: true
         type: string
       max_tags:
@@ -108,26 +108,26 @@ jobs:
         run: |
           mkdir -p artifacts
           python - <<'PY'
-import json, os
-from pathlib import Path
+          import json, os
+          from pathlib import Path
 
-branch = os.environ.get('BRANCH', 'unknown')
-tags_input = os.environ.get('TAGS_INPUT', '')
-max_tags = os.environ.get('MAX_TAGS', '0')
+          branch = os.environ.get('BRANCH', 'unknown')
+          tags_input = os.environ.get('TAGS_INPUT', '')
+          max_tags = os.environ.get('MAX_TAGS', '0')
 
-items = []
-for raw in [part.strip() for part in tags_input.split(',') if part.strip()]:
-    items.append(raw)
+          items = []
+          for raw in [part.strip() for part in tags_input.split(',') if part.strip()]:
+              items.append(raw)
 
-payload = {
-    "branch": branch,
-    "requested_tags": items,
-    "max_tags": int(max_tags or 0),
-    "status": "queued",
-}
-Path('artifacts/triage-request.json').write_text(json.dumps(payload, indent=2), encoding='utf-8')
-print(json.dumps(payload, indent=2))
-PY
+          payload = {
+              "branch": branch,
+              "requested_tags": items,
+              "max_tags": int(max_tags or 0),
+              "status": "queued",
+          }
+          Path('artifacts/triage-request.json').write_text(json.dumps(payload, indent=2), encoding='utf-8')
+          print(json.dumps(payload, indent=2))
+          PY
 
       - name: Run selected Playwright tags in order
         shell: bash
@@ -142,12 +142,12 @@ PY
           RUN_RESULTS='[]'
 
           python - <<'PY'
-import json
-from pathlib import Path
+          import json
+          from pathlib import Path
 
-summary_path = Path('artifacts/triage-summary.json')
-summary_path.write_text(json.dumps({"status": "running", "results": []}, indent=2), encoding='utf-8')
-PY
+          summary_path = Path('artifacts/triage-summary.json')
+          summary_path.write_text(json.dumps({"status": "running", "results": []}, indent=2), encoding='utf-8')
+          PY
 
           for tag in "${TAGS_ARRAY[@]}"; do
             cleaned="${tag#${tag%%[![:space:]]*}}"
@@ -168,20 +168,20 @@ PY
           done
 
           python - <<'PY'
-import json, os
-from pathlib import Path
+          import json, os
+          from pathlib import Path
 
-raw = os.environ.get('TAGS_INPUT', '')
-tags = [part.strip() for part in raw.split(',') if part.strip()]
-status = 'dry-run' if os.environ.get('DRY_RUN', 'false').lower() == 'true' else 'completed'
-summary = {
-    "status": status,
-    "requested_tags": tags,
-    "results": [{"tag": tag, "status": "dry-run" if status == 'dry-run' else "executed"} for tag in tags],
-}
-Path('artifacts/triage-summary.json').write_text(json.dumps(summary, indent=2), encoding='utf-8')
-print(json.dumps(summary, indent=2))
-PY
+          raw = os.environ.get('TAGS_INPUT', '')
+          tags = [part.strip() for part in raw.split(',') if part.strip()]
+          status = 'dry-run' if os.environ.get('DRY_RUN', 'false').lower() == 'true' else 'completed'
+          summary = {
+              "status": status,
+              "requested_tags": tags,
+              "results": [{"tag": tag, "status": "dry-run" if status == 'dry-run' else "executed"} for tag in tags],
+          }
+          Path('artifacts/triage-summary.json').write_text(json.dumps(summary, indent=2), encoding='utf-8')
+          print(json.dumps(summary, indent=2))
+          PY
 
       - name: Upload triage artifact
         if: always()
