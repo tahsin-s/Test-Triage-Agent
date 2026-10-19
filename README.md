@@ -15,7 +15,7 @@ The project is designed to stay easy to run from the command line, with clear bo
 
 ## Repository Layout
 
-- `src/qe_agent/reporting/` - report summarization and normalization
+- `src/qe_agent/reporting/` - report summarization and normalization 
 - `src/qe_agent/tagging/` - tag discovery and tag description logic
 - `src/qe_agent/recommendation/` - risk analysis and tag ordering
 - `src/qe_agent/orchestration/` - execution orchestration for selected Playwright tags

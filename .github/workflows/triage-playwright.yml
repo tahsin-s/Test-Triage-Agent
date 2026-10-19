@@ -1,0 +1,193 @@
+name: Triage Playwright Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Git branch or ref to inspect and run
+        required: true
+        type: string
+        default: main
+      tags:
+        description: Ordered Playwright tags to run, comma-separated (for example: @smoke,@auth,@goals)
+        required: true
+        type: string
+      max_tags:
+        description: Maximum number of tags allowed in the run
+        required: true
+        type: number
+        default: 3
+      dry_run:
+        description: Validate the request and print commands without running Playwright
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout selected branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate request payload
+        id: payload
+        shell: bash
+        env:
+          TAGS_INPUT: ${{ inputs.tags }}
+          MAX_TAGS: ${{ inputs.max_tags }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${TAGS_INPUT}" ]; then
+            echo "No tags were provided. Supply a comma-separated tag list."
+            exit 1
+          fi
+
+          TAGS_RAW="${TAGS_INPUT// /}"
+          IFS=',' read -r -a TAGS_ARRAY <<< "${TAGS_RAW}"
+          VALID_TAGS=()
+
+          for tag in "${TAGS_ARRAY[@]}"; do
+            cleaned="${tag#${tag%%[![:space:]]*}}"
+            cleaned="${cleaned%${cleaned##*[![:space:]]}}"
+            if [ -n "${cleaned}" ]; then
+              VALID_TAGS+=("${cleaned}")
+            fi
+          done
+
+          if [ "${#VALID_TAGS[@]}" -eq 0 ]; then
+            echo "No valid tags were supplied."
+            exit 1
+          fi
+
+          if [ "${#VALID_TAGS[@]}" -gt "${MAX_TAGS}" ]; then
+            echo "Requested ${#VALID_TAGS[@]} tags, but max_tags is ${MAX_TAGS}."
+            exit 1
+          fi
+
+          printf '%s\n' "${VALID_TAGS[@]}" > /tmp/ordered-tags.txt
+          echo "tag_count=${#VALID_TAGS[@]}" >> "$GITHUB_OUTPUT"
+
+      - name: Install Python dependencies
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Playwright dependencies
+        working-directory: ./banking-platform-voltio.QA/playwright
+        shell: bash
+        run: |
+          npm install --no-fund --no-audit
+
+      - name: Prepare summary payload
+        shell: bash
+        env:
+          TAGS_INPUT: ${{ inputs.tags }}
+          BRANCH: ${{ inputs.branch }}
+          MAX_TAGS: ${{ inputs.max_tags }}
+        run: |
+          mkdir -p artifacts
+          python - <<'PY'
+import json, os
+from pathlib import Path
+
+branch = os.environ.get('BRANCH', 'unknown')
+tags_input = os.environ.get('TAGS_INPUT', '')
+max_tags = os.environ.get('MAX_TAGS', '0')
+
+items = []
+for raw in [part.strip() for part in tags_input.split(',') if part.strip()]:
+    items.append(raw)
+
+payload = {
+    "branch": branch,
+    "requested_tags": items,
+    "max_tags": int(max_tags or 0),
+    "status": "queued",
+}
+Path('artifacts/triage-request.json').write_text(json.dumps(payload, indent=2), encoding='utf-8')
+print(json.dumps(payload, indent=2))
+PY
+
+      - name: Run selected Playwright tags in order
+        shell: bash
+        env:
+          TAGS_INPUT: ${{ inputs.tags }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+
+          IFS=',' read -r -a TAGS_ARRAY <<< "${TAGS_INPUT// /}"
+          SUMMARY_PATH="artifacts/triage-summary.json"
+          RUN_RESULTS='[]'
+
+          python - <<'PY'
+import json
+from pathlib import Path
+
+summary_path = Path('artifacts/triage-summary.json')
+summary_path.write_text(json.dumps({"status": "running", "results": []}, indent=2), encoding='utf-8')
+PY
+
+          for tag in "${TAGS_ARRAY[@]}"; do
+            cleaned="${tag#${tag%%[![:space:]]*}}"
+            cleaned="${cleaned%${cleaned##*[![:space:]]}}"
+            if [ -z "${cleaned}" ]; then
+              continue
+            fi
+
+            if [ "${DRY_RUN}" = "true" ]; then
+              echo "DRY RUN: npx playwright test --grep '${cleaned}'"
+              continue
+            fi
+
+            echo "Running tag: ${cleaned}"
+            cd ./banking-platform-voltio.QA/playwright
+            npx playwright test --grep "${cleaned}"
+            cd ../..
+          done
+
+          python - <<'PY'
+import json, os
+from pathlib import Path
+
+raw = os.environ.get('TAGS_INPUT', '')
+tags = [part.strip() for part in raw.split(',') if part.strip()]
+status = 'dry-run' if os.environ.get('DRY_RUN', 'false').lower() == 'true' else 'completed'
+summary = {
+    "status": status,
+    "requested_tags": tags,
+    "results": [{"tag": tag, "status": "dry-run" if status == 'dry-run' else "executed"} for tag in tags],
+}
+Path('artifacts/triage-summary.json').write_text(json.dumps(summary, indent=2), encoding='utf-8')
+print(json.dumps(summary, indent=2))
+PY
+
+      - name: Upload triage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: triage-summary
+          path: |
+            artifacts/triage-request.json
+            artifacts/triage-summary.json
